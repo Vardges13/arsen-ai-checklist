@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диагностика готовности к ИИ | АРСЕН AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a1a;--card:#12122a;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--text:#e2e8f0;--muted:#94a3b8;--border:#1e293b;--danger:#ef4444}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+.container{max-width:720px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 20px 30px;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e1b4b 100%);border-radius:20px;margin-bottom:30px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 50%);animation:pulse 4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.header h1{font-size:28px;font-weight:800;margin-bottom:8px;position:relative}
+.header .brand{color:var(--accent2);font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;position:relative}
+.header p{color:var(--muted);font-size:15px;max-width:500px;margin:0 auto;position:relative}
+.header .icon{font-size:48px;margin-bottom:16px;position:relative}
+
+/* Progress */
+.progress-bar{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0;margin-bottom:20px}
+.progress-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px;transition:width 0.4s ease;width:0%}
+.progress-text{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--muted)}
+
+/* Sections */
+.section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;transition:all 0.3s}
+.section.active{border-color:var(--accent);box-shadow:0 0 30px rgba(99,102,241,0.1)}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.section-num{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#4f46e5);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.section-title{font-size:20px;font-weight:700}
+.section-desc{color:var(--muted);font-size:14px;margin-bottom:24px;padding-left:48px}
+
+/* Questions */
+.question{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.question:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.q-label{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px}
+.q-num{color:var(--accent2);font-weight:700;flex-shrink:0}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle}
+.badge.critical{background:rgba(239,68,68,0.15);color:var(--danger)}
+.badge.important{background:rgba(234,179,8,0.15);color:#eab308}
+.badge.estimate{background:rgba(99,102,241,0.15);color:var(--accent2)}
+
+/* Options */
+.options{display:flex;flex-direction:column;gap:8px}
+.option{position:relative}
+.option input{position:absolute;opacity:0;pointer-events:none}
+.option label{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.2s;font-size:14px}
+.option label:hover{background:rgba(99,102,241,0.05);border-color:rgba(99,102,241,0.3)}
+.option input:checked+label{background:rgba(99,102,241,0.1);border-color:var(--accent);color:#fff}
+.option .radio{width:20px;height:20px;border:2px solid var(--border);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.option .checkbox{width:20px;height:20px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.option input:checked+label .radio{border-color:var(--accent);background:var(--accent)}
+.option input:checked+label .radio::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff}
+.option input:checked+label .checkbox{border-color:var(--accent);background:var(--accent)}
+.option input:checked+label .checkbox::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+
+/* Text inputs */
+.text-input{width:100%;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;transition:all 0.2s}
+.text-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.text-input::placeholder{color:var(--muted)}
+
+/* Priority inputs */
+.priority-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.priority-row select{width:60px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px}
+.priority-row span{font-size:14px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 32px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;width:100%}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,0.3)}
+.btn-primary:active{transform:translateY(0)}
+.btn-nav{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid var(--border)}
+.btn-nav:hover{background:rgba(255,255,255,0.1)}
+.nav-buttons{display:flex;gap:12px;margin-top:24px}
+.nav-buttons .btn{flex:1}
+
+/* Contact section */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.contact-grid{grid-template-columns:1fr}}
+.contact-grid .full{grid-column:1/-1}
+
+/* Result */
+.result-screen{display:none;text-align:center;padding:40px 20px}
+.result-screen.show{display:block}
+.result-icon{font-size:64px;margin-bottom:20px}
+.result-score{font-size:48px;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.result-label{color:var(--muted);font-size:14px;margin-bottom:30px}
+.result-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:30px}
+@media(max-width:500px){.result-cards{grid-template-columns:1fr}}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.result-card .val{font-size:24px;font-weight:700;color:var(--accent2)}
+.result-card .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.result-detail{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:left;margin-bottom:24px}
+.result-detail h3{margin-bottom:16px;font-size:18px}
+.result-detail ul{list-style:none;padding:0}
+.result-detail li{padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;display:flex;justify-content:space-between}
+.result-detail li:last-child{border-bottom:none}
+.score-high{color:var(--green)}
+.score-mid{color:#eab308}
+.score-low{color:var(--danger)}
+.cta-box{background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:16px;padding:30px;margin-top:24px}
+.cta-box h3{margin-bottom:8px}
+.cta-box p{color:var(--muted);font-size:14px;margin-bottom:16px}
+.hidden{display:none}
+
+/* Telegram link */
+.tg-link{display:inline-flex;align-items:center;gap:8px;color:var(--accent2);text-decoration:none;font-weight:600;font-size:16px}
+.tg-link:hover{text-decoration:underline}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="icon">🔍</div>
+    <div class="brand">АРСЕН AI</div>
+    <h1>Диагностика готовности к ИИ</h1>
+    <p>Аудит бизнес-процессов: определим, где скрыта экономия и какие процессы автоматизировать первыми</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span id="progressLabel">Блок 0 из 8</span><span id="progressPct">0%</span></div>
+  </div>
+
+  <!-- Block 0: Contact info -->
+  <div class="section active" data-step="0" id="step0">
+    <div class="section-header">
+      <div class="section-num">📋</div>
+      <div class="section-title">О компании</div>
+    </div>
+    <div class="section-desc">Заполните основную информацию</div>
+    <div class="contact-grid">
+      <div><input class="text-input" type="text" name="company" placeholder="Название компании" required></div>
+      <div><input class="text-input" type="text" name="industry" placeholder="Отрасль"></div>
+      <div><input class="text-input" type="text" name="contact_name" placeholder="Контактное лицо" required></div>
+      <div><input class="text-input" type="text" name="position" placeholder="Должность"></div>
+      <div><input class="text-input" type="text" name="employees" placeholder="Кол-во сотрудников"></div>
+      <div><input class="text-input" type="tel" name="phone" placeholder="Телефон или Telegram" required></div>
+    </div>
+    <div class="nav-buttons">
+      <button class="btn btn-primary" onclick="nextStep()">Начать диагностику →</button>
+    </div>
+  </div>
+
+  <!-- Block 1: Операционные процессы -->
+  <div class="section hidden" data-step="1" id="step1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">Операционные процессы</div>
+    </div>
+    <div class="section-desc">Определяем объём рутины, которую можно автоматизировать</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">1.1</span> Сколько времени сотрудники тратят на повторяющиеся задачи ежедневно? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q1_1" id="q1_1a" value="1"><label for="q1_1a"><span class="radio"></span>Менее 1 часа</label></div>
+        <div class="option"><input type="radio" name="q1_1" id="q1_1b" value="2"><label for="q1_1b"><span class="radio"></span>1–3 часа</label></div>
+        <div class="option"><input type="radio" name="q1_1" id="q1_1c" value="3"><label for="q1_1c"><span class="radio"></span>3–5 часов</label></div>
+        <div class="option"><input type="radio" name="q1_1" id="q1_1d" value="4"><label for="q1_1d"><span class="radio"></span>Более 5 часов</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">1.2</span> Какие задачи занимают больше всего времени? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2a" value="clients"><label for="q1_2a"><span class="checkbox"></span>Обработка обращений клиентов</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2b" value="data"><label for="q1_2b"><span class="checkbox"></span>Ввод и обработка данных</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2c" value="reports"><label for="q1_2c"><span class="checkbox"></span>Составление отчётов</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2d" value="docs"><label for="q1_2d"><span class="checkbox"></span>Согласование документов</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2e" value="planning"><label for="q1_2e"><span class="checkbox"></span>Планирование и распределение задач</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2f" value="control"><label for="q1_2f"><span class="checkbox"></span>Контроль исполнения</label></div>
+        <div class="option"><input type="checkbox" name="q1_2" id="q1_2g" value="debt"><label for="q1_2g"><span class="checkbox"></span>Работа с дебиторской задолженностью</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">1.3</span> Как часто возникают ошибки из-за ручного выполнения? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q1_3" id="q1_3a" value="1"><label for="q1_3a"><span class="radio"></span>Практически никогда</label></div>
+        <div class="option"><input type="radio" name="q1_3" id="q1_3b" value="2"><label for="q1_3b"><span class="radio"></span>Раз в неделю</label></div>
+        <div class="option"><input type="radio" name="q1_3" id="q1_3c" value="3"><label for="q1_3c"><span class="radio"></span>Несколько раз в неделю</label></div>
+        <div class="option"><input type="radio" name="q1_3" id="q1_3d" value="4"><label for="q1_3d"><span class="radio"></span>Ежедневно</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">1.4</span> Оцените потери от ошибок (в месяц) <span class="badge estimate">ОЦЕНКА</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q1_4" id="q1_4a" value="1"><label for="q1_4a"><span class="radio"></span>До 50 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q1_4" id="q1_4b" value="2"><label for="q1_4b"><span class="radio"></span>50 000 — 200 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q1_4" id="q1_4c" value="3"><label for="q1_4c"><span class="radio"></span>200 000 — 500 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q1_4" id="q1_4d" value="4"><label for="q1_4d"><span class="radio"></span>Более 500 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q1_4" id="q1_4e" value="2"><label for="q1_4e"><span class="radio"></span>Сложно оценить</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 2: Скорость решений -->
+  <div class="section hidden" data-step="2" id="step2">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-title">Принятие решений</div>
+    </div>
+    <div class="section-desc">Определяем узкие места в управленческих решениях</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">2.1</span> Сколько уровней согласования проходит типичное решение? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q2_1" id="q2_1a" value="1"><label for="q2_1a"><span class="radio"></span>1–2 уровня (быстро)</label></div>
+        <div class="option"><input type="radio" name="q2_1" id="q2_1b" value="2"><label for="q2_1b"><span class="radio"></span>3–4 уровня (средне)</label></div>
+        <div class="option"><input type="radio" name="q2_1" id="q2_1c" value="3"><label for="q2_1c"><span class="radio"></span>5+ уровней (долго)</label></div>
+        <div class="option"><input type="radio" name="q2_1" id="q2_1d" value="4"><label for="q2_1d"><span class="radio"></span>Нет чёткого процесса</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">2.2</span> Среднее время принятия операционного решения? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q2_2" id="q2_2a" value="1"><label for="q2_2a"><span class="radio"></span>Минуты — часы</label></div>
+        <div class="option"><input type="radio" name="q2_2" id="q2_2b" value="2"><label for="q2_2b"><span class="radio"></span>1–3 дня</label></div>
+        <div class="option"><input type="radio" name="q2_2" id="q2_2c" value="3"><label for="q2_2c"><span class="radio"></span>Неделя и более</label></div>
+        <div class="option"><input type="radio" name="q2_2" id="q2_2d" value="4"><label for="q2_2d"><span class="radio"></span>Решения часто «зависают»</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">2.3</span> Какой информации не хватает для принятия решений? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3a" value="clients"><label for="q2_3a"><span class="checkbox"></span>Актуальные данные о клиентах</label></div>
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3b" value="tasks"><label for="q2_3b"><span class="checkbox"></span>Статус задач/проектов</label></div>
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3c" value="finance"><label for="q2_3c"><span class="checkbox"></span>Финансовая аналитика</label></div>
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3d" value="market"><label for="q2_3d"><span class="checkbox"></span>Рыночная информация</label></div>
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3e" value="history"><label for="q2_3e"><span class="checkbox"></span>Историческая статистика</label></div>
+        <div class="option"><input type="checkbox" name="q2_3" id="q2_3f" value="none"><label for="q2_3f"><span class="checkbox"></span>Данных хватает</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 3: Клиентские коммуникации -->
+  <div class="section hidden" data-step="3" id="step3">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-title">Клиентские коммуникации</div>
+    </div>
+    <div class="section-desc">Оцениваем нагрузку на каналы общения с клиентами</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">3.1</span> Сколько входящих обращений в день? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q3_1" id="q3_1a" value="1"><label for="q3_1a"><span class="radio"></span>До 20</label></div>
+        <div class="option"><input type="radio" name="q3_1" id="q3_1b" value="2"><label for="q3_1b"><span class="radio"></span>20–50</label></div>
+        <div class="option"><input type="radio" name="q3_1" id="q3_1c" value="3"><label for="q3_1c"><span class="radio"></span>50–200</label></div>
+        <div class="option"><input type="radio" name="q3_1" id="q3_1d" value="4"><label for="q3_1d"><span class="radio"></span>200+</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">3.2</span> Какой процент обращений — типовые (повторяющиеся)?</div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q3_2" id="q3_2a" value="1"><label for="q3_2a"><span class="radio"></span>Менее 30%</label></div>
+        <div class="option"><input type="radio" name="q3_2" id="q3_2b" value="2"><label for="q3_2b"><span class="radio"></span>30–50%</label></div>
+        <div class="option"><input type="radio" name="q3_2" id="q3_2c" value="3"><label for="q3_2c"><span class="radio"></span>50–70%</label></div>
+        <div class="option"><input type="radio" name="q3_2" id="q3_2d" value="4"><label for="q3_2d"><span class="radio"></span>Более 70%</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">3.3</span> Среднее время ответа на обращение клиента? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q3_3" id="q3_3a" value="1"><label for="q3_3a"><span class="radio"></span>До 15 минут</label></div>
+        <div class="option"><input type="radio" name="q3_3" id="q3_3b" value="2"><label for="q3_3b"><span class="radio"></span>15 мин — 1 час</label></div>
+        <div class="option"><input type="radio" name="q3_3" id="q3_3c" value="3"><label for="q3_3c"><span class="radio"></span>1–4 часа</label></div>
+        <div class="option"><input type="radio" name="q3_3" id="q3_3d" value="4"><label for="q3_3d"><span class="radio"></span>Более 4 часов / на следующий день</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">3.4</span> Теряете клиентов из-за скорости ответа? <span class="badge estimate">ОЦЕНКА</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q3_4" id="q3_4a" value="1"><label for="q3_4a"><span class="radio"></span>Нет, всё в норме</label></div>
+        <div class="option"><input type="radio" name="q3_4" id="q3_4b" value="2"><label for="q3_4b"><span class="radio"></span>Иногда бывают жалобы</label></div>
+        <div class="option"><input type="radio" name="q3_4" id="q3_4c" value="3"><label for="q3_4c"><span class="radio"></span>Регулярно теряем клиентов</label></div>
+        <div class="option"><input type="radio" name="q3_4" id="q3_4d" value="4"><label for="q3_4d"><span class="radio"></span>Это главная проблема</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 4: Документооборот -->
+  <div class="section hidden" data-step="4" id="step4">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-title">Документооборот и отчётность</div>
+    </div>
+    <div class="section-desc">Оцениваем трудозатраты на работу с документами</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">4.1</span> Человеко-часов в месяц на подготовку отчётов? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q4_1" id="q4_1a" value="1"><label for="q4_1a"><span class="radio"></span>До 20 часов</label></div>
+        <div class="option"><input type="radio" name="q4_1" id="q4_1b" value="2"><label for="q4_1b"><span class="radio"></span>20–60 часов</label></div>
+        <div class="option"><input type="radio" name="q4_1" id="q4_1c" value="3"><label for="q4_1c"><span class="radio"></span>60–150 часов</label></div>
+        <div class="option"><input type="radio" name="q4_1" id="q4_1d" value="4"><label for="q4_1d"><span class="radio"></span>Более 150 часов</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">4.2</span> Какие документы создаются чаще всего? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2a" value="kp"><label for="q4_2a"><span class="checkbox"></span>Коммерческие предложения</label></div>
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2b" value="reports"><label for="q4_2b"><span class="checkbox"></span>Отчёты руководству</label></div>
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2c" value="contracts"><label for="q4_2c"><span class="checkbox"></span>Договоры</label></div>
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2d" value="protocols"><label for="q4_2d"><span class="checkbox"></span>Протоколы</label></div>
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2e" value="acts"><label for="q4_2e"><span class="checkbox"></span>Акты / накладные</label></div>
+        <div class="option"><input type="checkbox" name="q4_2" id="q4_2f" value="regulatory"><label for="q4_2f"><span class="checkbox"></span>Регуляторная отчётность</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">4.3</span> Используете шаблоны для типовых документов? <span class="badge estimate">ОЦЕНКА</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q4_3" id="q4_3a" value="1"><label for="q4_3a"><span class="radio"></span>Да, для всех документов</label></div>
+        <div class="option"><input type="radio" name="q4_3" id="q4_3b" value="2"><label for="q4_3b"><span class="radio"></span>Для части документов</label></div>
+        <div class="option"><input type="radio" name="q4_3" id="q4_3c" value="4"><label for="q4_3c"><span class="radio"></span>Нет, каждый раз с нуля</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 5: IT-ландшафт -->
+  <div class="section hidden" data-step="5" id="step5">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-title">IT-ландшафт</div>
+    </div>
+    <div class="section-desc">Определяем возможности интеграции ИИ-помощника</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">5.1</span> Какие системы используете? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1a" value="1c"><label for="q5_1a"><span class="checkbox"></span>1С (бухгалтерия/управление)</label></div>
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1b" value="crm"><label for="q5_1b"><span class="checkbox"></span>CRM (Bitrix24, AmoCRM и др.)</label></div>
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1c" value="industry"><label for="q5_1c"><span class="checkbox"></span>Отраслевое ПО</label></div>
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1d" value="erp"><label for="q5_1d"><span class="checkbox"></span>ERP-система</label></div>
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1e" value="excel"><label for="q5_1e"><span class="checkbox"></span>Только Excel / Google Sheets</label></div>
+        <div class="option"><input type="checkbox" name="q5_1" id="q5_1f" value="messengers"><label for="q5_1f"><span class="checkbox"></span>Мессенджеры (WhatsApp, Telegram)</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">5.2</span> Уровень цифровизации компании? <span class="badge estimate">ОЦЕНКА</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q5_2" id="q5_2a" value="1"><label for="q5_2a"><span class="radio"></span>Низкий (бумага + Excel)</label></div>
+        <div class="option"><input type="radio" name="q5_2" id="q5_2b" value="2"><label for="q5_2b"><span class="radio"></span>Средний (есть CRM/1С, но много ручного)</label></div>
+        <div class="option"><input type="radio" name="q5_2" id="q5_2c" value="3"><label for="q5_2c"><span class="radio"></span>Выше среднего (основные процессы автоматизированы)</label></div>
+        <div class="option"><input type="radio" name="q5_2" id="q5_2d" value="4"><label for="q5_2d"><span class="radio"></span>Высокий (всё в цифре, ищем ИИ)</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">5.3</span> Требования к хранению данных? <span class="badge estimate">ОЦЕНКА</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q5_3" id="q5_3a" value="1"><label for="q5_3a"><span class="radio"></span>Нет особых требований</label></div>
+        <div class="option"><input type="radio" name="q5_3" id="q5_3b" value="2"><label for="q5_3b"><span class="radio"></span>Стандартные (ФЗ-152)</label></div>
+        <div class="option"><input type="radio" name="q5_3" id="q5_3c" value="3"><label for="q5_3c"><span class="radio"></span>Повышенные (отраслевая специфика)</label></div>
+        <div class="option"><input type="radio" name="q5_3" id="q5_3d" value="4"><label for="q5_3d"><span class="radio"></span>Данные только on-premise</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 6: Кадры -->
+  <div class="section hidden" data-step="6" id="step6">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-title">Кадры и масштаб</div>
+    </div>
+    <div class="section-desc">Определяем реальную стоимость текущих неэффективностей</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">6.1</span> Сколько сотрудников на рутинных/админ задачах? <span class="badge critical">КРИТИЧНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q6_1" id="q6_1a" value="1"><label for="q6_1a"><span class="radio"></span>1–3 человека</label></div>
+        <div class="option"><input type="radio" name="q6_1" id="q6_1b" value="2"><label for="q6_1b"><span class="radio"></span>4–10 человек</label></div>
+        <div class="option"><input type="radio" name="q6_1" id="q6_1c" value="3"><label for="q6_1c"><span class="radio"></span>11–30 человек</label></div>
+        <div class="option"><input type="radio" name="q6_1" id="q6_1d" value="4"><label for="q6_1d"><span class="radio"></span>Более 30 человек</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">6.2</span> Сложности с наймом или текучестью? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q6_2" id="q6_2a" value="1"><label for="q6_2a"><span class="radio"></span>Нет проблем</label></div>
+        <div class="option"><input type="radio" name="q6_2" id="q6_2b" value="2"><label for="q6_2b"><span class="radio"></span>Иногда сложно найти людей</label></div>
+        <div class="option"><input type="radio" name="q6_2" id="q6_2c" value="3"><label for="q6_2c"><span class="radio"></span>Постоянная текучка</label></div>
+        <div class="option"><input type="radio" name="q6_2" id="q6_2d" value="4"><label for="q6_2d"><span class="radio"></span>Критическая нехватка кадров</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">6.3</span> Средняя зарплата на рутинных позициях?</div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q6_3" id="q6_3a" value="50"><label for="q6_3a"><span class="radio"></span>До 50 000 ₽/мес</label></div>
+        <div class="option"><input type="radio" name="q6_3" id="q6_3b" value="80"><label for="q6_3b"><span class="radio"></span>50 000 — 80 000 ₽/мес</label></div>
+        <div class="option"><input type="radio" name="q6_3" id="q6_3c" value="120"><label for="q6_3c"><span class="radio"></span>80 000 — 120 000 ₽/мес</label></div>
+        <div class="option"><input type="radio" name="q6_3" id="q6_3d" value="150"><label for="q6_3d"><span class="radio"></span>Более 120 000 ₽/мес</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="nextStep()">Далее →</button>
+    </div>
+  </div>
+
+  <!-- Block 7: Ожидания -->
+  <div class="section hidden" data-step="7" id="step7">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <div class="section-title">Ожидания и приоритеты</div>
+    </div>
+    <div class="section-desc">Определяем ключевые цели внедрения</div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">7.1</span> Самый важный результат от ИИ-помощника? <span class="badge important">ВАЖНО</span></div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q7_1" id="q7_1a" value="costs"><label for="q7_1a"><span class="checkbox"></span>Сокращение расходов на персонал</label></div>
+        <div class="option"><input type="checkbox" name="q7_1" id="q7_1b" value="speed"><label for="q7_1b"><span class="checkbox"></span>Ускорение обслуживания клиентов</label></div>
+        <div class="option"><input type="checkbox" name="q7_1" id="q7_1c" value="errors"><label for="q7_1c"><span class="checkbox"></span>Снижение количества ошибок</label></div>
+        <div class="option"><input type="checkbox" name="q7_1" id="q7_1d" value="decisions"><label for="q7_1d"><span class="checkbox"></span>Быстрое принятие решений</label></div>
+        <div class="option"><input type="checkbox" name="q7_1" id="q7_1e" value="scale"><label for="q7_1e"><span class="checkbox"></span>Масштабирование без найма</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">7.2</span> Когда хотите увидеть первые результаты?</div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q7_2" id="q7_2a" value="4"><label for="q7_2a"><span class="radio"></span>1–2 недели</label></div>
+        <div class="option"><input type="radio" name="q7_2" id="q7_2b" value="3"><label for="q7_2b"><span class="radio"></span>1 месяц</label></div>
+        <div class="option"><input type="radio" name="q7_2" id="q7_2c" value="2"><label for="q7_2c"><span class="radio"></span>2–3 месяца</label></div>
+        <div class="option"><input type="radio" name="q7_2" id="q7_2d" value="1"><label for="q7_2d"><span class="radio"></span>Не торопимся, главное качество</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">7.3</span> Бюджет на внедрение?</div>
+      <div class="options">
+        <div class="option"><input type="radio" name="q7_3" id="q7_3a" value="200"><label for="q7_3a"><span class="radio"></span>До 200 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q7_3" id="q7_3b" value="500"><label for="q7_3b"><span class="radio"></span>200 000 — 500 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q7_3" id="q7_3c" value="1000"><label for="q7_3c"><span class="radio"></span>500 000 — 1 000 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q7_3" id="q7_3d" value="1500"><label for="q7_3d"><span class="radio"></span>Более 1 000 000 ₽</label></div>
+        <div class="option"><input type="radio" name="q7_3" id="q7_3e" value="0"><label for="q7_3e"><span class="radio"></span>Зависит от показанного ROI</label></div>
+      </div>
+    </div>
+
+    <div class="question">
+      <div class="q-label"><span class="q-num">7.4</span> Что беспокоит относительно внедрения ИИ?</div>
+      <div class="options">
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4a" value="security"><label for="q7_4a"><span class="checkbox"></span>Безопасность данных</label></div>
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4b" value="roi"><label for="q7_4b"><span class="checkbox"></span>Неочевидность ROI</label></div>
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4c" value="resistance"><label for="q7_4c"><span class="checkbox"></span>Сопротивление сотрудников</label></div>
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4d" value="vendor"><label for="q7_4d"><span class="checkbox"></span>Зависимость от поставщика</label></div>
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4e" value="integration"><label for="q7_4e"><span class="checkbox"></span>Сложность интеграции</label></div>
+        <div class="option"><input type="checkbox" name="q7_4" id="q7_4f" value="nothing"><label for="q7_4f"><span class="checkbox"></span>Ничего не беспокоит</label></div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-nav" onclick="prevStep()">← Назад</button>
+      <button class="btn btn-primary" onclick="submitForm()">📊 Получить результат</button>
+    </div>
+  </div>
+
+  <!-- Result screen -->
+  <div class="result-screen" id="resultScreen">
+    <div class="result-icon">📊</div>
+    <div class="result-score" id="resultScore">0</div>
+    <div class="result-label">Индекс готовности к ИИ из 100</div>
+
+    <div class="result-cards">
+      <div class="result-card"><div class="val" id="resSavings">—</div><div class="lbl">Оценка экономии / мес</div></div>
+      <div class="result-card"><div class="val" id="resPayback">—</div><div class="lbl">Срок окупаемости</div></div>
+      <div class="result-card"><div class="val" id="resLevel">—</div><div class="lbl">Уровень готовности</div></div>
+    </div>
+
+    <div class="result-detail">
+      <h3>Результаты по блокам</h3>
+      <ul id="blockScores"></ul>
+    </div>
+
+    <div class="cta-box">
+      <h3>🚀 Следующий шаг</h3>
+      <p>По результатам диагностики мы подготовим персональный расчёт экономии и предложим бесплатный 2-недельный пилот для одного бизнес-процесса.</p>
+      <p><strong>Бесплатно. Без обязательств. Результат за 14 дней.</strong></p>
+      <a class="tg-link" href="https://t.me/arsen_ai_bot" target="_blank">💬 Написать в Telegram →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStep = 0;
+const totalSteps = 8;
+
+function updateProgress() {
+  const pct = Math.round((currentStep / (totalSteps - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Блок ${currentStep} из ${totalSteps - 1}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function showStep(n) {
+  document.querySelectorAll('.section').forEach(s => { s.classList.add('hidden'); s.classList.remove('active'); });
+  const el = document.getElementById('step' + n);
+  if (el) { el.classList.remove('hidden'); el.classList.add('active'); }
+  currentStep = n;
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+  if (currentStep < totalSteps - 1) showStep(currentStep + 1);
+}
+
+function prevStep() {
+  if (currentStep > 0) showStep(currentStep - 1);
+}
+
+function getRadioValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? parseInt(el.value) : 0;
+}
+
+function getCheckboxCount(name) {
+  return document.querySelectorAll(`input[name="${name}"]:checked`).length;
+}
+
+function submitForm() {
+  // Calculate scores per block (max 4 per question, normalize to ~14 per block)
+  const blocks = [
+    { name: 'Операционные процессы', score: getRadioValue('q1_1') + Math.min(getCheckboxCount('q1_2'), 4) + getRadioValue('q1_3') + getRadioValue('q1_4') },
+    { name: 'Принятие решений', score: getRadioValue('q2_1') + getRadioValue('q2_2') + Math.min(getCheckboxCount('q2_3'), 4) },
+    { name: 'Клиентские коммуникации', score: getRadioValue('q3_1') + getRadioValue('q3_2') + getRadioValue('q3_3') + getRadioValue('q3_4') },
+    { name: 'Документооборот', score: getRadioValue('q4_1') + Math.min(getCheckboxCount('q4_2'), 4) + getRadioValue('q4_3') },
+    { name: 'IT-ландшафт', score: Math.min(getCheckboxCount('q5_1'), 4) + getRadioValue('q5_2') + getRadioValue('q5_3') },
+    { name: 'Кадры и масштаб', score: getRadioValue('q6_1') + getRadioValue('q6_2') + (getRadioValue('q6_3') > 0 ? 2 : 0) },
+    { name: 'Ожидания', score: Math.min(getCheckboxCount('q7_1'), 4) + getRadioValue('q7_2') + (getRadioValue('q7_3') > 0 ? 2 : 0) }
+  ];
+
+  const maxScores = [16, 12, 16, 12, 12, 10, 10];
+  let totalScore = 0;
+  let totalMax = 0;
+
+  const ul = document.getElementById('blockScores');
+  ul.innerHTML = '';
+
+  blocks.forEach((b, i) => {
+    const pct = Math.round((b.score / maxScores[i]) * 100);
+    totalScore += b.score;
+    totalMax += maxScores[i];
+    const cls = pct >= 70 ? 'score-high' : pct >= 40 ? 'score-mid' : 'score-low';
+    ul.innerHTML += `<li>${b.name}<span class="${cls}">${pct}%</span></li>`;
+  });
+
+  const finalScore = Math.round((totalScore / totalMax) * 100);
+  document.getElementById('resultScore').textContent = finalScore;
+
+  // Estimate savings
+  const salary = getRadioValue('q6_3') || 80;
+  const staff = [2, 7, 20, 40][getRadioValue('q6_1') - 1] || 5;
+  const savings = Math.round(salary * staff * 0.3);
+  document.getElementById('resSavings').textContent = savings > 0 ? `~${savings} тыс ₽` : '—';
+
+  // Payback
+  document.getElementById('resPayback').textContent = finalScore >= 60 ? '2–4 нед.' : finalScore >= 30 ? '1–2 мес.' : '2–3 мес.';
+
+  // Level
+  const level = finalScore >= 75 ? '🟢 Высокая' : finalScore >= 50 ? '🟡 Средняя' : finalScore >= 25 ? '🟠 Начальная' : '🔴 Низкая';
+  document.getElementById('resLevel').textContent = level;
+
+  // Show result
+  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('resultScreen').classList.add('show');
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressLabel').textContent = 'Диагностика завершена';
+  document.getElementById('progressPct').textContent = '100%';
+
+  // Collect data for sending
+  const contactData = {
+    company: document.querySelector('[name=company]')?.value,
+    industry: document.querySelector('[name=industry]')?.value,
+    contact: document.querySelector('[name=contact_name]')?.value,
+    phone: document.querySelector('[name=phone]')?.value,
+    score: finalScore,
+    savings: savings + ' тыс ₽'
+  };
+  console.log('Form data:', JSON.stringify(contactData));
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+updateProgress();
+</script>
+</body>
+</html>
